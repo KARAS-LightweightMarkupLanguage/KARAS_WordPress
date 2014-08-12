@@ -39,7 +39,7 @@ class Mark
             $color = " style=\"background-color:" . $options[0] . ";\"";
         }
 
-        return "<mark" . $color . ">" . $markedupText . "</mark>";
+        return "<mark" . $color . ">" . KARAS\KARAS::convertInlineMarkup($markedupText) . "</mark>";
 	}
 }
 

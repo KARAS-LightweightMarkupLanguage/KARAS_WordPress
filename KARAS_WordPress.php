@@ -4,11 +4,13 @@
 //Plugin URI: http://lightweightmarkuplanguage.com/
 //Description: Convert KARAS syntax to HTML. This plugin works as filter and ignores any others except prepend_attachement.
 //Author: XJINE
-//Version: 0.9beta
+//Version: 0.9.1beta
 //Author URI: http://lightweightmarkuplanguage.com/
 //License: BSD
 
 //Need PHP Version 5.2 or later.
+
+define("KARASPluginDirectory", WP_PLUGIN_DIR . "/KARAS_WordPress/plugins");
 
 require_once("KARAS.php");
 
@@ -19,24 +21,35 @@ add_filter("the_excerpt", "convert_KARAS");
 
 function add_convert_KARAS_checkbox()
 {
-    add_meta_box("convert_KARAS", "KARAS", "html_source_for_convert_KARAS", "post", "side", "high");
+    add_meta_box("convert_KARAS",
+                 "KARAS",
+                 "html_source_for_convert_KARAS",
+                 "post",
+                 "side",
+                 "high");
+    add_meta_box("convert_KARAS",
+                 "KARAS",
+                 "html_source_for_convert_KARAS",
+                 "page",
+                 "side",
+                 "high");
 }
  
 function html_source_for_convert_KARAS()
 {
     $post_id = get_the_ID();
-	$is_checked = get_post_meta($post_id, "convert_KARAS", true);
+    $is_checked = get_post_meta($post_id, "convert_KARAS", true);
  
     print ("<label for=\"convet_KARAS\">Convert KARAS.</label><p>");
 
     if($is_checked == "true")
     {
-	    print("<input type=\"checkbox\" name=\"convert_KARAS\" checked>");
+        print("<input type=\"checkbox\" name=\"convert_KARAS\" checked>");
     }
-	else
-	{
-	    print("<input type=\"checkbox\" name=\"convert_KARAS\">");
-	}
+    else
+    {
+        print("<input type=\"checkbox\" name=\"convert_KARAS\">");
+    }
 
     print "</p>";
 }
@@ -72,13 +85,13 @@ function convert_KARAS($content)
     $post_id = get_the_ID();
     $is_checked = get_post_meta($post_id, "convert_KARAS", true);
 
-	if($is_checked == "true")
-	{
+    if($is_checked == "true")
+    {
         $content = get_the_content();
-        $content = KARAS\KARAS::convert($content, WP_PLUGIN_DIR . "/KARAS for WordPress/plugins");
+        $content = KARAS\KARAS::convert($content, KARASPluginDirectory);
         apply_filters("prepend_attachment", $content);
-		return $content;
-	}
+        return $content;
+    }
     else
     {
         return $content;

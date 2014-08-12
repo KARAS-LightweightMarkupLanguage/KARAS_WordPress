@@ -105,13 +105,13 @@ class KARAS
     const BlockGroupTypeKbd = 12;
     const BlockGroupTypeSamp = 13;
 
-    public static $ReservedBlockGroupTypes = 
-    [
+    public static $ReservedBlockGroupTypes = array
+    (
         "div", "header", "footer", "nav",
         "article", "section", "aside", "address",
         "details", "figure",
         "pre", "code", "kbd", "samp"
-    ];
+    );
 
     const InlineMarkupTypeDefAbbr = 5;
     const InlineMarkupVarCode = 6;
@@ -566,7 +566,7 @@ class KARAS
 
         if ($plugin == null)
         {
-            return " Plugin \"" . $pluginName . "\" has wrong. ";
+            return " Plugin \"" . $pluginName . "\" not found. ";
         }
 
         try
@@ -593,7 +593,7 @@ class KARAS
 
         if ($plugin == null)
         {
-            return " Plugin \"" . $pluginName . "\" has wrong. ";
+            return " Plugin \"" . $pluginName . "\" not found. ";
         }
 
         try
@@ -2794,7 +2794,7 @@ class PluginManager
             if (is_file($file) == true)
             {
                 $pathinfo = pathinfo($file);
-                
+
                 if(strcasecmp($pathinfo["extension"], "php") == 0)
                 {
                     $plugins[] = $file;
