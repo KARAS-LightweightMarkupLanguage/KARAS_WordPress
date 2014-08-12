@@ -9,9 +9,13 @@ If you want to get more info about KARAS, please visit [lightweightmarkuplanguag
 
 
 
-## How to Use
+## Setting
 
-This WordPress plugin is hook to ``` the_content ``` as // Filter //. Unzip download file, and put into ``` plugins ``` directory.
+This WordPress plugin is hook to ``` the_content ``` as **Filter**. Unzip download file, and rename the directory to  *KARAS_WordPress*. Then, put the renamed directory into ``` plugins ``` directory. Finally, it is important to change the permission of the plugin directory of KARAS. KARAS's plugin and the parent directory have to be readable(R) and executable(X) from the user. For example, such permission value is '0705'. Be careful, directory of KARAS's plugin is not equal to the directory of WordPress's plugin. 
+
+
+
+## How to Use
 
 Meta-box of KARAS (custom fields) will appear in the article post screen. If check, the syntax of the KARAS in your article will be converted.
 
