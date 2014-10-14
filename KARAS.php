@@ -28,7 +28,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//Need PHP Version 5.2 or later.
+//Need PHP version 5.2 or later.
 
 namespace KARAS;
 
@@ -71,8 +71,8 @@ class KARAS
          = "/(\\\\*)((\\[{2,}[\x{0020}\x{00A0}]*\\[*)|(\\]{2,}[\x{0020}\x{00A0}]*\\]*))/u";
     const RegexCommentOut
         = "/(\\\\*)(\\#{2,})/su";
-    const RegexsplitOption
-         = "/(\\\\*)(::)/su";
+    const RegexSplitOption
+         = "/(\\\\*)(\\:{2,3})/su";
 
     //Other
     const RegexEscape
@@ -105,13 +105,13 @@ class KARAS
     const BlockGroupTypeKbd = 12;
     const BlockGroupTypeSamp = 13;
 
-    public static $ReservedBlockGroupTypes = array
-    (
+    public static $ReservedBlockGroupTypes = 
+    [
         "div", "header", "footer", "nav",
         "article", "section", "aside", "address",
         "details", "figure",
         "pre", "code", "kbd", "samp"
-    );
+    ];
 
     const InlineMarkupTypeDefAbbr = 5;
     const InlineMarkupVarCode = 6;
@@ -168,7 +168,8 @@ class KARAS
 
 
 
-    public static function convert($text, $pluginDirectory = KARAS::PluginDirectory)
+    public static function convert
+        ($text, $pluginDirectory, $startLevelOfHeading)
     {
         $escapeCode = KARAS::generateSafeEscapeCode($text, KARAS::DefaultEscapeCode);
         $lineBreakCode = KARAS::getDefaultLineBreakCode($text);
@@ -205,7 +206,7 @@ class KARAS
         $text = KARAS::convertTable($text);
         $text = KARAS::convertList($text);
         $text = KARAS::convertDefList($text);
-        $text = KARAS::convertHeading($text);
+        $text = KARAS::convertHeading($text, $startLevelOfHeading);
         $text = KARAS::convertBlockLink($text);
         $text = KARAS::convertParagraph($text);
         $text = KARAS::reduceBlankLine($text);
@@ -383,7 +384,7 @@ class KARAS
         return preg_replace(KARAS::RegexWhiteSpace, "", $text);
     }
 
-    public static function splitOption($text)
+    public static function splitOption($text, &$isSpecialOption)
     {
         //match group index.
         //$mgiAllText = 0;
@@ -395,8 +396,11 @@ class KARAS
 
         while (true)
         {
-            $matchIsSuccess = preg_match
-                (KARAS::RegexsplitOption, $text, $match, PREG_OFFSET_CAPTURE, $nextMatchIndex);
+            $matchIsSuccess = preg_match(KARAS::RegexSplitOption,
+                                         $text,
+                                         $match,
+                                         PREG_OFFSET_CAPTURE,
+                                         $nextMatchIndex);
 
             if ($matchIsSuccess === 0)
             {
@@ -409,33 +413,49 @@ class KARAS
                 continue;
             }
 
-            return array(
-                            trim(substr($text, 0, $match[$mgiMarks][1])),
-                            trim(substr($text, $match[$mgiMarks][1] + strlen($match[$mgiMarks][0])))
-                        );
+            if(strlen($match[$mgiMarks][0]) == 3)
+            {
+                $isSpecialOption = true;
+            }
+            else
+            {
+                $isSpecialOption = false;   
+            }
+
+            return array(trim(substr($text, 0, $match[$mgiMarks][1])),
+                         trim(substr($text, $match[$mgiMarks][1] + strlen($match[$mgiMarks][0]))));
         }
     }
 
-    public static function splitOptions($text)
+    public static function splitOptions($text, &$hasSpecialOption)
     {
-        $textList = array();
+        $options = array();
         $restText = trim($text);
 
         while (true)
         {
-            $splitTexts = KARAS::splitOption($restText);
+            $isSpecialOption = false;
+            $splitResult = KARAS::splitOption($restText, $isSpecialOption);
             
-            if (count($splitTexts) == 1)
+            if (count($splitResult) == 1)
             {
-                $textList[] = $restText;
+                $options[] = $restText;
                 break;
             }
 
-            $textList[] = $splitTexts[0];
-            $restText = $splitTexts[1];
+            if($isSpecialOption == true)
+            {
+                $options[] = $splitResult[0];
+                $options[] = $splitResult[1];
+                $hasSpecialOption = true;
+                break;
+            }
+
+            $options[] = $splitResult[0];
+            $restText = $splitResult[1];
         }
 
-        return $textList;
+        return $options;
     }
 
 
@@ -531,49 +551,50 @@ class KARAS
     private static function constructPluginText
         ($text, $markedupText, $openMarks, $closeMarks, $pluginManager)
     {
-        $markedupTexts = KARAS::splitOptions($markedupText);
+        $hasSpecialOption = false;
+        $markedupTexts = KARAS::splitOptions($markedupText, $hasSpecialOption);
+        $markedupText = null;
         $pluginName = $markedupTexts[0];
         $options = array();
 
+        //Remove plugin name from option.
+        if (count($markedupTexts) > 1)
+        {
+            $options = array_slice($markedupTexts, 1);
+        }
+
+        if($hasSpecialOption == true)
+        {
+            $markedupText = array_pop($options);
+        }
+
         if (strlen($openMarks) > 2 && strlen($closeMarks) > 2)
         {
-            if (count($markedupTexts) > 1)
-            {
-                $options = array_slice($markedupTexts, 1);
-            }
-
             return KARAS::constructActionTypePluginText
-                        ($pluginManager, $pluginName, $text, $options);
+                        ($pluginManager, $pluginName, $options, $markedupText, $text);
         }
         else
         {
-            $markedupText = $markedupTexts[count($markedupTexts) - 1];
-
-            if (count($markedupTexts) > 2)
-            {
-                $options = array_slice($markedupTexts, 1, count($markedupTexts) - 2);
-            }
-
             return KARAS::constructConvertTypePluginText
-                        ($pluginManager, $pluginName, $markedupText, $options);
+                        ($pluginManager, $pluginName, $options, $markedupText);
         }
     }
 
-    private static function constructConvertTypePluginText
-        ($pluginManager, $pluginName, $markedupText, $options)
+    private static function constructActionTypePluginText
+        ($pluginManager, $pluginName, $options, $markedupText, $text)
     {
         $plugin = $pluginManager->getPlugin($pluginName);
 
         if ($plugin == null)
         {
-            return " Plugin \"" . $pluginName . "\" not found. ";
+            return " Plugin \"" . $pluginName . "\" has wrong. ";
         }
 
         try
         {
-            if($plugin->hasMethod("convert") == true)
+            if($plugin->hasMethod("action") == true)
             {
-                return $plugin->getMethod("convert")->invoke(null, $markedupText, $options);
+                return $plugin->getMethod("action")->invoke(null, $options, $markedupText, $text);
             }
             else
             {
@@ -586,21 +607,21 @@ class KARAS
         }
     }
 
-    private static function constructActionTypePluginText
-        ($pluginManager, $pluginName, $text, $options)
+    private static function constructConvertTypePluginText
+        ($pluginManager, $pluginName, $options, $markedupText)
     {
         $plugin = $pluginManager->getPlugin($pluginName);
 
         if ($plugin == null)
         {
-            return " Plugin \"" . $pluginName . "\" not found. ";
+            return " Plugin \"" . $pluginName . "\" has wrong. ";
         }
 
         try
         {
-            if($plugin->hasMethod("action") == true)
+            if($plugin->hasMethod("convert") == true)
             {
-                return $plugin->getMethod("action")->invoke(null, $text, $options);
+                return $plugin->getMethod("convert")->invoke(null, $options, $markedupText);
             }
             else
             {
@@ -750,7 +771,8 @@ class KARAS
         $blockGroupMatch->index = $index;
         $blockGroupMatch->length = $textLength;
 
-        $options = KARAS::splitOptions($optionText);
+        $hasSpecialOption = false;
+        $options = KARAS::splitOptions($optionText, $hasSpecialOption);
 
         if (count($options) > 0)
         {
@@ -854,7 +876,8 @@ class KARAS
                 //Note, it is important to convert inline markups first,
                 //to convert inline markup's options first.
                 $markedupText = KARAS::convertInlineMarkup($match[$mgiMarkedupText][0]);
-                $markedupTexts = KARAS::splitOptions($markedupText);
+                $hasSpecialOption = false;
+                $markedupTexts = KARAS::splitOptions($markedupText, $hasSpecialOption);
                 $id = "";
 
                 if (count($markedupTexts) > 1)
@@ -1805,7 +1828,8 @@ class KARAS
     private static function constructListItemText($listItemText)
     {
         $listItemText = KARAS::convertInlineMarkup($listItemText);
-        $listItemTexts = KARAS::splitOption($listItemText);
+        $isSpecialOption = false;
+        $listItemTexts = KARAS::splitOption($listItemText, $isSpecialOption);
 
         if (count($listItemTexts) > 1)
         {
@@ -1922,7 +1946,7 @@ class KARAS
         return $text;
     }
 
-    public static function convertHeading($text)
+    public static function convertHeading($text, $startLevelOfHeading = 1)
     {
         //match group index.
         $mgiAllText = 0;
@@ -1947,6 +1971,7 @@ class KARAS
 
             $newText = "";
             $level = strlen($match[$mgiMarks][0]);
+            $level = $level + $startLevelOfHeading - 1;
 
             if ($level >= $maxLevelOfHeading + 1)
             {
@@ -1957,7 +1982,8 @@ class KARAS
                 //Note, it is important to convert inline markups first,
                 //to convert inline markup's options first.
                 $markedupText = KARAS::convertInlineMarkup($match[$mgiMarkedupText][0]);
-                $markedupTexts = KARAS::splitOption($markedupText);
+                $isSpecialOption = false;
+                $markedupTexts = KARAS::splitOption($markedupText, $isSpecialOption);
                 $id = "";
 
                 if (count($markedupTexts) > 1)
@@ -2393,7 +2419,8 @@ class KARAS
     private static function constructLinkText
         ($markedupText, &$newText, &$openMarks, &$closeMarks)
     {
-        $markedupTexts = KARAS::splitOption($markedupText);
+        $isSpecialOption = false;
+        $markedupTexts = KARAS::splitOption($markedupText, $isSpecialOption);
         $url = $markedupTexts[0];
 
         if (strlen($openMarks) >= 5 && strlen($closeMarks) >= 5)
@@ -2620,7 +2647,8 @@ class KARAS
     private static function constructInlineGroupText
         ($markedupText, &$newText, &$openMarks, &$closeMarks)
     {
-        $markedupTexts = KARAS::splitOption($markedupText);
+        $isSpecialOption = false;
+        $markedupTexts = KARAS::splitOption($markedupText, $isSpecialOption);
         $idClass = "";
 
         if (strlen($openMarks) >= 3 && strlen($closeMarks) >= 3)
@@ -2632,15 +2660,22 @@ class KARAS
             $idClass = " class=\"";
         }
 
-        if (count($markedupTexts) > 1)
+        if(strlen($markedupTexts[0]) == 0)
+        {
+            $idClass = "";
+        }
+        else
         {
             $idClass .= $markedupTexts[0] . "\"";
+        }
+
+        if (count($markedupTexts) > 1)
+        {
             $newText = $markedupTexts[1];
         }
         else
         {
-            $newText = $markedupTexts[0];
-            $idClass = "";
+            $newText = "";
         }
 
         $markDiff = strlen($openMarks) - strlen($closeMarks);
@@ -2672,7 +2707,8 @@ class KARAS
         {
             $openTag = "<ruby>";
             $closeTag = "</ruby>";
-            $markedupTexts = KARAS::splitOptions($markedupText);
+            $hasSpecialOption = false;
+            $markedupTexts = KARAS::splitOptions($markedupText, $hasSpecialOption);
             $markedupText = $markedupTexts[0];
 
             for ($i = 1; $i < count($markedupTexts); $i += 2)
@@ -2794,7 +2830,7 @@ class PluginManager
             if (is_file($file) == true)
             {
                 $pathinfo = pathinfo($file);
-
+                
                 if(strcasecmp($pathinfo["extension"], "php") == 0)
                 {
                     $plugins[] = $file;

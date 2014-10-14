@@ -30,7 +30,7 @@
 
 class Mark
 {
-    public static function convert($markedupText, $options)
+    public static function convert($options, $markedupText)
     {
         $color = "";
 
@@ -39,7 +39,7 @@ class Mark
             $color = " style=\"background-color:" . $options[0] . ";\"";
         }
 
-        return "<mark" . $color . ">" . KARAS\KARAS::convertInlineMarkup($markedupText) . "</mark>";
+        return "<mark" . $color . ">" . $markedupText . "</mark>";
 	}
 }
 

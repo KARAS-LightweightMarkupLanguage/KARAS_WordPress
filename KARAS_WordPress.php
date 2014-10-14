@@ -16,6 +16,8 @@ require_once("KARAS.php");
 
 add_action("admin_menu", "add_convert_KARAS_checkbox");
 add_action("save_post", "save_convert_KARAS_custom_field");
+remove_filter("the_content", "wpautop" );
+remove_filter("the_excerpt", "wpautop" );
 add_filter("the_content", "convert_KARAS");
 add_filter("the_excerpt", "convert_KARAS");
 
@@ -88,7 +90,7 @@ function convert_KARAS($content)
     if($is_checked == "true")
     {
         $content = get_the_content();
-        $content = KARAS\KARAS::convert($content, KARASPluginDirectory);
+        $content = KARAS\KARAS::convert($content, KARASPluginDirectory, 2);
         apply_filters("prepend_attachment", $content);
         return $content;
     }

@@ -30,12 +30,12 @@
 
 class NowEditing
 {
-    public static function convert($markedupText, $options)
+    public static function convert($options, $markedupText)
     {
         return "<b> Now Editing. </b>";
     }
 
-	public static function action($text, $options)
+	public static function action($options, $markedupText, $text)
 	{
         return "\n<p><span style=\"font-size:300%;\"><b> Now Editing. </b></span></p>\n";
 	}

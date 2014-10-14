@@ -30,18 +30,18 @@
 
 class Template
  {
-    public static function convert($markedupText, $options)
+    public static function convert($options, $markedupText)
     {
-        //Markup syntax is this. "[[plugin::option1::option2…::markedupText]]"
+        //Markup syntax is this. "[[plugin::option1::option2…:::markedupText]]"
         //Markedup text(and the syntax) in original text will be removed,
         //and insert return text there.
         //If you wont insert anything text, you have to return ""(empty string).
         return $markedupText;
     }
 
-    public static function action($text, $options)
+    public static function action($options, $markedupText, $text)
     {
-        //Markup syntax is this. "[[[plugin::option1::option2…]]]"
+        //Markup syntax is this. "[[[plugin::option1::option2…:::markedupText]]]"
         //"text" is all of the original text.
         //Markedup text(and the syntax) in original text will be removed,
         //and insert return text there.

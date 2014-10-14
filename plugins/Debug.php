@@ -30,12 +30,12 @@
 
 class Debug
 {
-    public static function convert($markedupText, $options)
+    public static function convert($options, $markedupText)
     {
         return $markedupText;
     }
 
-	public static function action($text, $options)
+	public static function action($options, $markedupText, $text)
 	{
         return $options[0];
 	}
