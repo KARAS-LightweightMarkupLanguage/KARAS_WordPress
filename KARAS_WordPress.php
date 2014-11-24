@@ -4,7 +4,7 @@
 //Plugin URI: http://lightweightmarkuplanguage.com/
 //Description: Convert KARAS syntax to HTML. This plugin works as filter and ignores any others except prepend_attachement.
 //Author: XJINE
-//Version: 0.9.1beta
+//Version: 0.9.2beta
 //Author URI: http://lightweightmarkuplanguage.com/
 //License: BSD
 
@@ -16,10 +16,18 @@ require_once("KARAS.php");
 
 add_action("admin_menu", "add_convert_KARAS_checkbox");
 add_action("save_post", "save_convert_KARAS_custom_field");
-remove_filter("the_content", "wpautop" );
-remove_filter("the_excerpt", "wpautop" );
-add_filter("the_content", "convert_KARAS");
-add_filter("the_excerpt", "convert_KARAS");
+add_filter("the_content", "convert_KARAS", 9);
+add_filter("the_excerpt", "convert_KARAS", 9);
+
+//Undesirable default functions
+// remove_filter("the_content", "capital_P_dangit");
+// remove_filter("the_content", "wptexturize");
+// remove_filter("the_content", "convert_smilies");
+// remove_filter("the_content", "convert_chars");
+// remove_filter("the_content", "wpautop");
+// remove_filter("the_content", "shortcode_unautop");
+// remove_filter("the_content", "prepend_attachment");
+// remove_filter("the_content", "attribute_escape");
 
 function add_convert_KARAS_checkbox()
 {
@@ -74,14 +82,6 @@ function save_convert_KARAS_custom_field($post_id)
     }
 }
 
-function print_filters_for($filtername)
-{
-    global $wp_filter;
-    print "<pre>";
-    print_r($wp_filter[$filtername]);
-    print "</pre>";
-}
-
 function convert_KARAS($content)
 {
     $post_id = get_the_ID();
@@ -91,13 +91,20 @@ function convert_KARAS($content)
     {
         $content = get_the_content();
         $content = KARAS\KARAS::convert($content, KARASPluginDirectory, 2);
-        apply_filters("prepend_attachment", $content);
         return $content;
     }
     else
     {
         return $content;
     }
+}
+
+function print_filters_for($filtername)
+{
+    global $wp_filter;
+    print "<pre>";
+    print_r($wp_filter[$filtername]);
+    print "</pre>";
 }
 
 // Copyright (c) 2014, Daiki Umeda(XJINE) - lightweightmarkuplanguage.com

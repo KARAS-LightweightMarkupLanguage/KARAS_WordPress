@@ -105,13 +105,13 @@ class KARAS
     const BlockGroupTypeKbd = 12;
     const BlockGroupTypeSamp = 13;
 
-    public static $ReservedBlockGroupTypes = 
-    [
+    public static $ReservedBlockGroupTypes = array
+    (
         "div", "header", "footer", "nav",
         "article", "section", "aside", "address",
         "details", "figure",
         "pre", "code", "kbd", "samp"
-    ];
+    );
 
     const InlineMarkupTypeDefAbbr = 5;
     const InlineMarkupVarCode = 6;
@@ -2085,7 +2085,7 @@ class KARAS
             if (strlen($match[$mgiLTMarks][0]) == 1)
             {
                 //Note, it is important to exclude line breaks (like \n).
-                $nextMatchIndex = $match[$mgiAllText][1] + strlen($match[$mgiMarkedupText][0]);
+                $nextMatchIndex = $match[$mgiMarkedupText][1] + strlen($match[$mgiMarkedupText][0]);
                 continue;
             }
 
